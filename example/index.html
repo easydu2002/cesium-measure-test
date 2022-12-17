@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Document</title>
+  <script src="./Cesium/Cesium.js"></script>
+  <link href="./Cesium/Widgets/widgets.css" rel="stylesheet">
+  <script type="module">
+    "use strict";
+    import * as MeasureModule from './../build/index.js'
+    window.MeasureModule=MeasureModule
+    Cesium.Ion.defaultAccessToken = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJqdGkiOiJiZjgyZjhhZC0zZGQxLTQwY2MtYjMxNS04MWUxYWIzNjRhNTkiLCJpZCI6NzA1MTAsImlhdCI6MTYzNDM0NzY1NH0.kSyX-st-hObNYXnZG--uTZn-Wdw-gUNP9y9uMyT8mYA'
+    const viewer = new Cesium.Viewer('cesium-container', {
+      terrainProvider: Cesium.createWorldTerrain()
+    })
+    window.viewerviewer=viewer
+    viewer.cesiumWidget.screenSpaceEventHandler.removeInputAction(Cesium.ScreenSpaceEventType.LEFT_DOUBLE_CLICK)
+    viewer.cesiumWidget.screenSpaceEventHandler.removeInputAction(Cesium.ScreenSpaceEventType.LEFT_CLICK)
+    viewer.scene.debugShowFramesPerSecond = true
+    if(Cesium.FeatureDetection.supportsImageRenderingPixelated()){
+    viewer.resolutionScale = window.devicePixelRatio;
+  }
+    const tools = document.getElementById('cesium-tools')
+    function createToolButton(text, onClick) {
+      const btn = document.createElement('button')
+      btn.innerText = text
+      btn.onclick = onClick
+      tools.append(btn)
+    }
+
+    createToolButton('贴地面积量算', ()=> {
+      MeasureModule.PolygonDraw.drawPolygon(viewer)
+        .then(positions => {
+          console.log('positions', positions)
+          const result = MeasureModule.GeometrySplit.splitTriangle(positions, {
+            maxTriangleArea: 100,
+            terrainProvider: viewer.scene.globe
+          })
+          console.log('splitTriangle', result)
+        })
+    })
+    createToolButton('方量分析', ()=> {
+      MeasureModule.PolygonDraw.drawPolygon(viewer)
+        .then(positions => {
+          console.log('positions', positions)
+          
+          const polygonGeometry = Cesium.PolygonGeometry.fromPositions({
+            positions,
+            granularity: Math.PI / 11 / 64,
+            vertexFormat: Cesium.PerInstanceColorAppearance.FLAT_VERTEX_FORMAT
+          })
+          const geometry = Cesium.PolygonGeometry.createGeometry(polygonGeometry)
+          console.log(geometry)
+        })
+    })
+  </script>
+</head>
+<body style="margin: 0;">
+  <div id="cesium-container" style="position: relative;width: 100vw;height: 100vh;">
+    <div id="cesium-tools" style="position: absolute;top: 0;left: 0;padding: 10px;z-index: 1;">
+
+    </div>
+  </div>
+</body>
+</html>
